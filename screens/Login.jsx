@@ -4,25 +4,25 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false); // State to control password visibility
-
+  const currentYear = new Date().getFullYear();
   return (
     <ImageBackground
       source={{ uri: 'https://www.gajikuapp.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fgajiku-hero-image.d542e448.png&w=3840&q=75' }} // Background image URL
       style={styles.background}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>Selamat Datang endang kancut</Text>
+        <Text style={styles.title}>Absensi Online</Text>
 
         <View style={styles.inputContainer}>
           <Icon name="account" size={24} color="#888" style={styles.icon} />
-          <TextInput placeholder="Nama Pengguna" style={styles.input} />
+          <TextInput placeholder="Username" style={styles.input} />
         </View>
 
         {/* Password input */}
         <View style={styles.inputContainer}>
           <Icon name="lock" size={24} color="#888" style={styles.icon} />
           <TextInput
-            placeholder="Kata Sandi"
+            placeholder="Password"
             style={styles.input}
           />
           <TouchableOpacity
@@ -44,7 +44,7 @@ const Login = () => {
 
    
         <Text style={styles.footerText}>
-          Syarat dan Ketentuan dapat Dilihat Disini
+          @{currentYear} PT. NUSA TECHNO INDONESIA
         </Text>
       </View>
     </ImageBackground>
