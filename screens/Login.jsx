@@ -1,10 +1,69 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import axios from 'axios'; 
 
-const Login = () => {
-  const [showPassword, setShowPassword] = useState(false); // State to control password visibility
+const Login = ({ navigation }) => {
+  const [showPassword, setShowPassword] = useState(false); 
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const currentYear = new Date().getFullYear();
+
+
+  const handleLogin = async () => {
+    // Cek jika field email atau password kosong
+    if (!username) {
+      Alert.alert('Missing Email', 'Please enter your email');
+      return; // Stop execution if email is empty
+    }
+  
+    if (!password) {
+      Alert.alert('Missing Password', 'Please enter your password');
+      return; // Stop execution if password is empty
+    }
+  
+    try {
+      const response = await axios.post(
+        'http://192.168.100.39:8000/login',
+        { email: username, password },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+  
+      console.log('Login Response:', response);
+  
+      if (response.data.token) {
+        // Simpan token di AsyncStorage dan arahkan ke Dashboard
+        await AsyncStorage.setItem('token', response.data.token);
+        navigation.replace('Dashboard'); // Redirect to Dashboard
+      } else {
+        // Jika tidak ada token, berarti kredensial salah
+        Alert.alert('Login failed', 'Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Error during login:', error.response || error.message || error);
+  
+      // Jika response error menyebutkan "Invalid credentials" atau kesalahan lain
+      if (error.response && error.response.data) {
+        if (error.response.data.message === 'Invalid password') {
+          Alert.alert('Login failed', 'Password salah');
+        } else {
+          Alert.alert('Login failed', 'An error occurred during login');
+        }
+      } else {
+        // Jika tidak ada response dari server
+        Alert.alert('Login failed', 'An error occurred during login');
+      }
+    }
+  };
+  
+  
+  
+
   return (
     <ImageBackground
       source={{ uri: 'https://www.gajikuapp.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fgajiku-hero-image.d542e448.png&w=3840&q=75' }} // Background image URL
@@ -15,15 +74,23 @@ const Login = () => {
 
         <View style={styles.inputContainer}>
           <Icon name="account" size={24} color="#888" style={styles.icon} />
-          <TextInput placeholder="Username" style={styles.input} />
+          <TextInput 
+            placeholder="Email" 
+            style={styles.input} 
+            value={username}
+            onChangeText={setUsername} 
+          />
         </View>
 
-        {/* Password input */}
+  
         <View style={styles.inputContainer}>
           <Icon name="lock" size={24} color="#888" style={styles.icon} />
           <TextInput
             placeholder="Password"
             style={styles.input}
+            secureTextEntry={!showPassword} 
+            value={password}
+            onChangeText={setPassword} 
           />
           <TouchableOpacity
             onPress={() => setShowPassword(prev => !prev)} 
@@ -37,12 +104,12 @@ const Login = () => {
           </TouchableOpacity>
         </View>
 
-    
-        <TouchableOpacity style={styles.button}>
+      
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Masuk</Text>
         </TouchableOpacity>
 
-   
+    
         <Text style={styles.footerText}>
           @{currentYear} PT. NUSA TECHNO INDONESIA
         </Text>

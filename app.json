@@ -4,22 +4,31 @@
     "slug": "absensiapps",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/nusatechno.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/nusatechno.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app requires access to the camera"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/nusatechno.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+    "android": {
+  "permissions": [
+    "CAMERA"
+  ]
+}
+
     },
     "web": {
       "favicon": "./assets/favicon.png"
