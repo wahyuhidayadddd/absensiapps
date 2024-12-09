@@ -11,6 +11,8 @@ import LayarUtama from './screens/LayarUtama';
 import EditProfile from './screens/EditProfile';
 import Scan from './screens/Scan'; 
 import Approval from './screens/Approval';
+import { store } from './src/store';
+import { Provider } from 'react-redux';
 
 
 function Home() {
@@ -77,6 +79,7 @@ function DashboardTabs() {
 
 export default function App() {
   return (
+    <Provider store={store}> 
     <NavigationContainer>
       <Stack.Navigator initialRouteName="LayarUtama">
         <Stack.Screen name="LayarUtama" component={LayarUtama} options={{ headerShown: false }} />
@@ -87,5 +90,7 @@ export default function App() {
         <Stack.Screen name="Approval" component={Approval} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
+  </Provider> 
+ 
   );
 }

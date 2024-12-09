@@ -1,28 +1,32 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import axios from 'axios'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { loginStart, loginSuccess, loginFailure } from '../src/features/authSlice';
+import { useDispatch } from 'react-redux';
 
 const Login = ({ navigation }) => {
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const currentYear = new Date().getFullYear();
-
+  const dispatch = useDispatch();
 
   const handleLogin = async () => {
-    // Cek jika field email atau password kosong
     if (!username) {
       Alert.alert('Missing Email', 'Please enter your email');
-      return; // Stop execution if email is empty
+      return;
     }
-  
+
     if (!password) {
       Alert.alert('Missing Password', 'Please enter your password');
-      return; // Stop execution if password is empty
+      return;
     }
+
   
+    dispatch(loginStart());
+
     try {
       const response = await axios.post(
         'http://192.168.100.39:8000/login',
@@ -33,21 +37,25 @@ const Login = ({ navigation }) => {
           },
         }
       );
-  
+
       console.log('Login Response:', response);
-  
+
       if (response.data.token) {
-        // Simpan token di AsyncStorage dan arahkan ke Dashboard
+      
         await AsyncStorage.setItem('token', response.data.token);
-        navigation.replace('Dashboard'); // Redirect to Dashboard
+
+       
+        dispatch(loginSuccess({ token: response.data.token, user: response.data.user }));
+
+      
+        navigation.replace('Dashboard');
       } else {
-        // Jika tidak ada token, berarti kredensial salah
         Alert.alert('Login failed', 'Invalid credentials');
+        dispatch(loginFailure('Invalid credentials'));
       }
     } catch (error) {
       console.error('Error during login:', error.response || error.message || error);
-  
-      // Jika response error menyebutkan "Invalid credentials" atau kesalahan lain
+
       if (error.response && error.response.data) {
         if (error.response.data.message === 'Invalid password') {
           Alert.alert('Login failed', 'Password salah');
@@ -55,14 +63,11 @@ const Login = ({ navigation }) => {
           Alert.alert('Login failed', 'An error occurred during login');
         }
       } else {
-        // Jika tidak ada response dari server
         Alert.alert('Login failed', 'An error occurred during login');
       }
+      dispatch(loginFailure('Login failed'));
     }
   };
-  
-  
-  
 
   return (
     <ImageBackground
@@ -82,7 +87,6 @@ const Login = ({ navigation }) => {
           />
         </View>
 
-  
         <View style={styles.inputContainer}>
           <Icon name="lock" size={24} color="#888" style={styles.icon} />
           <TextInput
@@ -104,12 +108,10 @@ const Login = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-      
         <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Masuk</Text>
         </TouchableOpacity>
 
-    
         <Text style={styles.footerText}>
           @{currentYear} PT. NUSA TECHNO INDONESIA
         </Text>

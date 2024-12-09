@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, FlatList, Modal } from 'react-native'; 
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginStart, loginSuccess, loginFailure } from '../src/features/authSlice'; 
 
 const newsData = [
   {
@@ -28,50 +30,43 @@ const newsData = [
 ];
 
 const Dashboard = () => {
-  const [userData, setUserData] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const dispatch = useDispatch();
+  const { token, user, loading, error } = useSelector(state => state.auth);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
-     
-        const token = await AsyncStorage.getItem('token');
+      dispatch(loginStart()); // Start loading
 
-        if (!token) {
-          console.log('No token found. Please log in again.');
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (!storedToken) {
+          dispatch(loginFailure('No token found. Please log in again.'));
           return;
         }
 
-        console.log("Fetching user data...");
-        
-        
         const response = await fetch('http://192.168.100.39:8000/profile', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`, 
+            'Authorization': `Bearer ${storedToken}`,
             'Content-Type': 'application/json',
           },
         });
 
-     l
         if (!response.ok) {
           throw new Error('Error fetching profile data');
         }
 
         const data = await response.json();
-        console.log("Response received: ", data);
-
-        
-        setUserData(data);
+        dispatch(loginSuccess({ token: storedToken, user: data }));
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        dispatch(loginFailure(error.message));
       }
     };
 
     fetchUserData();
-  }, []);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const navigation = useNavigation();
-  
+  }, [dispatch]);
 
   const handleMenuClick = (screenName) => {
     navigation.navigate(screenName); 
@@ -94,16 +89,15 @@ const Dashboard = () => {
               style={styles.profileImage}
             />
             <View>
-  {userData ? (
-    <>
-      <Text style={styles.userName}>{userData.name}</Text>
-      <Text style={styles.userRole}>{userData.role}</Text>
-    </>
-  ) : (
-    <Text>Loading...</Text> 
-  )}
-</View>
-
+              {user ? (
+                <>
+                  <Text style={styles.userName}>{user.name}</Text>
+                  <Text style={styles.userRole}>{user.role}</Text>
+                </>
+              ) : (
+                <Text>Loading...</Text> 
+              )}
+            </View>
           </TouchableOpacity>
           <View style={styles.headerIcons}>
             <Icon name="notifications-none" size={24} color="#fff" style={styles.icon} />
@@ -112,7 +106,6 @@ const Dashboard = () => {
         </View>
       </View>
 
-     
       <View style={styles.newsSection}>
         <Text style={styles.sectionTitle}>Berita PTR Terbaru</Text>
         <FlatList
@@ -147,7 +140,7 @@ const Dashboard = () => {
         <Text style={styles.footer}>Copyright © PT Nusa Techno Indonesia 2024</Text>
       </View>
 
-      {/* Modal for Profile */}
+     
       <Modal
         visible={isModalVisible}
         transparent
@@ -197,30 +190,30 @@ const styles = StyleSheet.create({
   userName: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   userRole: { color: '#fff', fontSize: 14 },
   headerIcons: { flexDirection: 'row', alignItems: 'center' },
-  icon: { marginRight: 10 },
-  newsSection: { padding: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333' },
-  newsList: { gap: 15 },
-  newsCard: { borderRadius: 10, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 3, width: 250, marginRight: 15 },
-  newsImage: { width: '100%', height: 150, resizeMode: 'cover' },
-  newsText: { padding: 15, fontSize: 14, fontWeight: 'bold', color: '#555', textAlign: 'center' },
-  menuContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', paddingTop: 20 },
-  menuItem: { alignItems: 'center', marginBottom: 20, width: '30%' },
-  menuIcon: { backgroundColor: '#3B82F6', padding: 10, borderRadius: 30, marginBottom: 10, alignItems: 'center', justifyContent: 'center' },
-  iconImage: { width: 30, height: 30, resizeMode: 'contain' },
-  menuText: { fontSize: 14, color: '#333' },
-  footerContainer: { marginTop: 30, marginBottom: 10, alignItems: 'center' },
-  footer: { fontSize: 12, color: '#888' },
-  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: '#fff', borderRadius: 15, padding: 20, alignItems: 'center', width: '90%', elevation: 5 },
+  icon: { marginRight: 15 },
+  newsSection: { marginTop: 20, paddingHorizontal: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  newsList: { marginTop: 10 },
+  newsCard: { marginRight: 15, backgroundColor: '#fff', borderRadius: 10, padding: 10, width: 250 },
+  newsImage: { width: '100%', height: 150, borderRadius: 8 },
+  newsText: { marginTop: 10, fontSize: 14, fontWeight: 'bold', color: '#333' },
+  menuContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 20, paddingHorizontal: 20, justifyContent: 'space-between', },
+  menuItem: {  width: '30%', marginBottom: 20, backgroundColor: '#fff', padding: 15, borderRadius: 10, alignItems: 'center' },
+  menuIcon: { backgroundColor: '#d1d1d1', borderRadius: 20, padding: 15 },
+  iconImage: { width: 30, height: 30 },
+  menuText: { marginTop: 10, fontSize: 14, color: '#333' },
+  footerContainer: { alignItems: 'center', marginTop: 20, paddingBottom: 20 },
+  footer: { fontSize: 12, color: '#666' },
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent: { backgroundColor: '#fff', padding: 20, width: '80%', borderRadius: 15 },
   closeIcon: { position: 'absolute', top: 10, right: 10 },
-  modalImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 15, borderWidth: 2, borderColor: '#4CAF50' },
-  modalName: { fontSize: 20, fontWeight: 'bold', marginBottom: 5 },
-  modalRole: { fontSize: 16, color: '#4CAF50', marginBottom: 15 },
-  modalDetails: { marginBottom: 15 },
-  modalDetail: { fontSize: 14, color: '#333', marginBottom: 5 },
-  closeButton: { backgroundColor: '#4CAF50', padding: 10, borderRadius: 5 },
-  closeButtonText: { color: '#fff', fontSize: 16 },
+  modalImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 15, alignSelf: 'center' },
+  modalName: { fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
+  modalRole: { fontSize: 14, textAlign: 'center', color: '#888' },
+  modalDetails: { marginTop: 15 },
+  modalDetail: { fontSize: 14, marginBottom: 10, color: '#333' },
+  closeButton: { marginTop: 20, backgroundColor: '#25a0ab', padding: 10, borderRadius: 5 },
+  closeButtonText: { color: '#fff', textAlign: 'center', fontSize: 16 },
 });
 
 export default Dashboard;
